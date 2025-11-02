@@ -93,7 +93,8 @@ run_eda <- function(df, target_var = "revenue", segment_var = NULL) {
   print(missing_pct)
   
   # Flag missingness as binary features
-  df <- df %>% mutate(across(where(is.numeric), ~as.integer(is.na(.)), .names = "missing_{.col}"))
+  df <- df %>% mutate(across(where(is.numeric), ~as.integer(is.na(.)), .names =
+                               "missing_{.col}"))
   
   # Categorical variable profiling
   cat("\n--- Categorical Variable Profiling ---\n")
@@ -141,7 +142,8 @@ run_eda <- function(df, target_var = "revenue", segment_var = NULL) {
   if (target_var %in% names(original_df)) {
     plot_boxplot(original_df, by = target_var)
   } else {
-    cat(paste0("Target variable '", target_var, "' not found in original_df. Skipping boxplot.\n"))
+    cat(paste0("Target variable '", target_var, 
+               "' not found in original_df. Skipping boxplot.\n"))
   }
   
   # Segment-based summary (if applicable)
@@ -166,7 +168,8 @@ prep_data <- function(df, reference_cols = NULL) {
   df <- df %>% clean_names()
   df <- df %>% select(-any_of(c("customer", "phone_number")))
   df <- df %>%
-    mutate(across(where(is.numeric), ~ifelse(is.na(.), median(., na.rm = TRUE), .)))
+    mutate(across(where(is.numeric), ~ifelse(is.na(.), median(., na.rm = TRUE),
+                                             .)))
   
   df <- df %>%
     mutate(
@@ -200,7 +203,8 @@ prep_data <- function(df, reference_cols = NULL) {
 }
 
 # Run EDA on raw data (non-destructive)
-run_eda(revenue_data_raw, target_var = "revenue", segment_var = "competitive_package")
+run_eda(revenue_data_raw, target_var = "revenue", segment_var = 
+          "competitive_package")
 
 # Preprocess for modeling
 revenue_data <- prep_data(revenue_data_raw)
@@ -413,8 +417,8 @@ nn_formula <- as.formula(paste("revenue ~", paste(predictors,
 
 # Train neural network
 set.seed(config$seed)
-nn_model <- neuralnet(nn_formula, data = train_nn, hidden = config$nn_hidden_layers, 
-                      linear.output = TRUE)
+nn_model <- neuralnet(nn_formula, data = train_nn, hidden = 
+                        config$nn_hidden_layers, linear.output = TRUE)
 
 # Predict on test set
 pred_nn <- compute(nn_model, test_nn)$net.result
@@ -470,9 +474,10 @@ stack_test <- tibble(
 pred_ensemble_stack <- predict(meta_model, newdata = stack_test)
 
 # Generate ensemble predictions
-pred_ensemble_avg      <- (pred_enet + pred_xgb) / 2
+pred_ensemble_avg <- (pred_enet + pred_xgb) / 2
 weights <- config$ensemble_weights$weighted
-pred_ensemble_weighted <- weights["xgb"] * pred_xgb + weights["enet"] * pred_enet
+pred_ensemble_weighted <- weights["xgb"] * pred_xgb + 
+  weights["enet"] * pred_enet
 
 # ====================================================================== #
 # XGBoost – Feature Importance
@@ -533,8 +538,8 @@ train_quartile_model <- function(data, model_type = "xgb") {
     nn_data <- bind_cols(x_nn, revenue = y_nn)
     nn_formula <- as.formula(paste("revenue ~", paste(predictors, 
                                                       collapse = " + ")))
-    nn_model <- neuralnet(nn_formula, data = nn_data, hidden = config$nn_quartile_layers, 
-                          linear.output = TRUE)
+    nn_model <- neuralnet(nn_formula, data = nn_data, hidden = 
+                            config$nn_quartile_layers, linear.output = TRUE)
     return(nn_model)
   }
 }
@@ -591,7 +596,8 @@ stratified_results <- bind_rows(test_predictions)
 # Utility Function – Model Performance Evaluation
 # ====================================================================== #
 
-evaluate_model <- function(actual, predicted, model_name = "Model", n_boot = 1000) {
+evaluate_model <- function(actual, predicted, model_name = "Model", n_boot = 
+                             1000) {
   rmse_val <- rmse(actual, predicted)
   mae_val  <- mae(actual, predicted)
   r2_val   <- cor(actual, predicted)^2
@@ -610,9 +616,11 @@ evaluate_model <- function(actual, predicted, model_name = "Model", n_boot = 100
   r2_ci <- quantile(boot_r2, probs = c(0.025, 0.975))
   
   cat(paste0(model_name, " Performance:\n"))
-  cat("RMSE:", round(rmse_val, 2), " [95% CI: ", round(rmse_ci[1], 2), "–", round(rmse_ci[2], 2), "]\n")
+  cat("RMSE:", round(rmse_val, 2), " [95% CI: ", round(rmse_ci[1], 2), "–", 
+      round(rmse_ci[2], 2), "]\n")
   cat("MAE:", round(mae_val, 2), "\n")
-  cat("R²:", round(r2_val, 3), " [95% CI: ", round(r2_ci[1], 3), "–", round(r2_ci[2], 3), "]\n")
+  cat("R²:", round(r2_val, 3), " [95% CI: ", round(r2_ci[1], 3), "–", 
+      round(r2_ci[2], 3), "]\n")
   
   return(tibble(
     Model = model_name,
@@ -630,10 +638,15 @@ evaluate_model <- function(actual, predicted, model_name = "Model", n_boot = 100
 results_enet <- evaluate_model(target_test, pred_enet, "Elastic Net")
 results_nn   <- evaluate_model(target_test, pred_nn, "Neural Network")
 results_xgb  <- evaluate_model(target_test, pred_xgb, "XGBoost")
-results_ensemble_avg <- evaluate_model(target_test, pred_ensemble_avg, "Ensemble Average")
-results_ensemble_weighted <- evaluate_model(target_test, pred_ensemble_weighted, "Ensemble Weighted")
-results_ensemble_stack <- evaluate_model(target_test, pred_ensemble_stack, "Ensemble Stacked")
-overall_eval <- evaluate_model(stratified_results$actual, stratified_results$predicted, "Stratified XGBoost")
+results_ensemble_avg <- evaluate_model(target_test, pred_ensemble_avg, 
+                                       "Ensemble Average")
+results_ensemble_weighted <- evaluate_model(target_test, pred_ensemble_weighted,
+                                            "Ensemble Weighted")
+results_ensemble_stack <- evaluate_model(target_test, pred_ensemble_stack, 
+                                         "Ensemble Stacked")
+overall_eval <- evaluate_model(stratified_results$actual, 
+                               stratified_results$predicted, 
+                               "Stratified XGBoost")
 
 # ====================================================================== #
 # CRISP-DM Step 5: Evaluation – Load Verification Data
@@ -786,7 +799,8 @@ residuals_strat <- stratified_results$actual - stratified_results$predicted
 residuals_stack <- target_test - pred_ensemble_stack
 
 # Residual plots for Stratified and Ensemble Stacked
-png("outputs/figures/residual_stratified_stacked.png", width = 800, height = 400)
+png("outputs/figures/residual_stratified_stacked.png", width = 800, 
+    height = 400)
 par(mfrow = c(1, 2))
 plot(stratified_results$predicted, residuals_strat, 
      main = "Stratified XGBoost Residuals",
@@ -896,15 +910,18 @@ decile_summary <- df %>%
 # Gain Curve – XGBoost Model
 gain_curve_xgb <- ggplot(decile_summary, aes(x = percent_customers)) +
   geom_line(aes(y = cumulative_actual, color = "Model Gain"), size = 1.2) +
-  geom_line(aes(y = random_gain, color = "Random Gain"), linetype = "dashed", size = 1) +
+  geom_line(aes(y = random_gain, color = "Random Gain"), linetype = "dashed", 
+            size = 1) +
   labs(title = "Gain Curve – XGBoost Model",
        x = "Percent of Customers Targeted",
        y = "Cumulative Revenue Captured") +
-  scale_color_manual(values = c("Model Gain" = "blue", "Random Gain" = "gray")) +
+  scale_color_manual(values = c("Model Gain" = "blue", 
+                                "Random Gain" = "gray")) +
   theme_minimal()
 
 print(gain_curve_xgb)  # Displays in RStudio
-ggsave("outputs/figures/gain_curve_xgb.png", plot = gain_curve_xgb, width = 8, height = 6)
+ggsave("outputs/figures/gain_curve_xgb.png", plot = gain_curve_xgb, width = 8, 
+       height = 6)
 
 # Lift Curve – XGBoost Model
 lift_curve_xgb <- ggplot(decile_summary, aes(x = decile, y = lift)) +
@@ -916,7 +933,8 @@ lift_curve_xgb <- ggplot(decile_summary, aes(x = decile, y = lift)) +
   theme_minimal()
 
 print(lift_curve_xgb)  # Displays in RStudio
-ggsave("outputs/figures/lift_chart_xgb.png", plot = lift_chart_xgb, width = 8, height = 6)
+ggsave("outputs/figures/lift_curve_xgb.png", plot = lift_curve_xgb, width = 8, 
+       height = 6)
 
 # ====================================================================== #
 # CRISP-DM Step 5: Evaluation – Lift & Gain Curve Comparison
@@ -943,10 +961,13 @@ gain_data <- function(actual, predicted, model_name) {
 # Compute gain/lift data for all models
 gain_enet      <- gain_data(target_test, pred_enet, "Elastic Net")
 gain_xgb       <- gain_data(target_test, pred_xgb, "XGBoost")
-gain_stack     <- gain_data(target_test, pred_ensemble_stack, "Ensemble Stacked")
+gain_stack     <- gain_data(target_test, pred_ensemble_stack, 
+                            "Ensemble Stacked")
 gain_avg       <- gain_data(target_test, pred_ensemble_avg, "Ensemble Average")
-gain_weighted  <- gain_data(target_test, pred_ensemble_weighted, "Ensemble Weighted")
-gain_strat     <- gain_data(stratified_results$actual, stratified_results$predicted, "Stratified XGBoost")
+gain_weighted  <- gain_data(target_test, pred_ensemble_weighted, 
+                            "Ensemble Weighted")
+gain_strat     <- gain_data(stratified_results$actual, 
+                            stratified_results$predicted, "Stratified XGBoost")
 
 gain_all <- bind_rows(
   gain_enet,
@@ -980,7 +1001,8 @@ write_csv(gain_all, "outputs/reports/gain_lift_summary.csv")
 saveRDS(gain_all, "outputs/reports/gain_lift_summary.rds")
 
 # Gain Curve
-gain_curve_all <- ggplot(gain_all, aes(x = percent_customers, y = gain, color = model)) +
+gain_curve_all <- ggplot(gain_all, aes(x = percent_customers, y = gain, 
+                                       color = model)) +
   geom_line(size = 1.2) +
   labs(title = "Gain Curve Comparison",
        x = "Percent of Customers Targeted",
@@ -988,7 +1010,8 @@ gain_curve_all <- ggplot(gain_all, aes(x = percent_customers, y = gain, color = 
   theme_minimal()
 
 print(gain_curve_all)  # Show in RStudio
-ggsave("outputs/figures/gain_curve_comparison.png", plot = gain_curve_all, width = 10, height = 6)
+ggsave("outputs/figures/gain_curve_comparison.png", plot = gain_curve_all, 
+       width = 10, height = 6)
 
 # Lift Chart
 lift_chart_all <- ggplot(gain_all, aes(x = decile, y = lift, color = model)) +
@@ -1001,7 +1024,8 @@ lift_chart_all <- ggplot(gain_all, aes(x = decile, y = lift, color = model)) +
   theme_minimal()
 
 print(lift_chart_all)  # Show in RStudio
-ggsave("outputs/figures/lift_chart_comparison.png", plot = lift_chart_all, width = 10, height = 6)
+ggsave("outputs/figures/lift_chart_comparison.png", plot = lift_chart_all, 
+       width = 10, height = 6)
 
 # ====================================================================== #
 # CRISP-DM Step 6: Deployment
