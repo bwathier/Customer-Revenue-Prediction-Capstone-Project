@@ -1,0 +1,7 @@
+model,RevenueCaptured
+Elastic Net,16.7
+XGBoost,16.7
+Ensemble Stacked,16.7
+Ensemble Average,16.7
+Ensemble Weighted,16.7
+Stratified XGBoost,16.7
