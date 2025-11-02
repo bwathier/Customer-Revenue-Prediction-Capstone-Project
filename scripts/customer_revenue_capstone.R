@@ -765,6 +765,7 @@ residuals_xgb  <- target_test - pred_xgb
 residuals_nn   <- target_test - pred_nn
 
 # Residual plots
+png("outputs/figures/base_residuals.png", width = 800, height = 400)
 par(mfrow = c(1, 3))
 plot(pred_enet, residuals_enet, main = "Elastic Net Residuals",
      xlab = "Predicted Revenue", ylab = "Residuals", col = "blue", pch = 16)
@@ -778,12 +779,14 @@ abline(h = 0, col = "red", lty = 2)
 plot(pred_nn, residuals_nn, main = "Neural Net Residuals",
      xlab = "Predicted Revenue", ylab = "Residuals", col = "purple", pch = 16)
 abline(h = 0, col = "red", lty = 2)
+dev.off()
 
 # Residuals for Stratified and Ensemble Stacked
 residuals_strat <- stratified_results$actual - stratified_results$predicted
 residuals_stack <- target_test - pred_ensemble_stack
 
 # Residual plots for Stratified and Ensemble Stacked
+png("outputs/figures/residual_stratified_stacked.png", width = 800, height = 400)
 par(mfrow = c(1, 2))
 plot(stratified_results$predicted, residuals_strat, 
      main = "Stratified XGBoost Residuals",
@@ -793,8 +796,10 @@ abline(h = 0, col = "red", lty = 2)
 plot(pred_ensemble_stack, residuals_stack, main = "Ensemble Stacked Residuals",
      xlab = "Predicted Revenue", ylab = "Residuals", col = "brown", pch = 16)
 abline(h = 0, col = "red", lty = 2)
+dev.off()
 
 # Fit plots for Stratified and Ensemble Stacked
+png("outputs/figures/fit_stratified_stacked.png", width = 800, height = 400)
 par(mfrow = c(1, 2))
 plot(stratified_results$actual, stratified_results$predicted, 
      main = "Stratified XGBoost Fit",
@@ -806,8 +811,10 @@ plot(target_test, pred_ensemble_stack, main = "Ensemble Stacked Fit",
      xlab = "Actual Revenue", ylab = "Predicted Revenue", col = "brown", 
      pch = 16)
 abline(0, 1, col = "black", lty = 2)
+dev.off()
 
 # Prediction vs. Actual scatterplots
+png("outputs/figures/fit_all_models.png", width = 1200, height = 800)
 par(mfrow = c(2, 3))  # 2 rows, 3 columns for 6 models
 
 plot(target_test, pred_enet, main = "Elastic Net Fit",
@@ -835,6 +842,7 @@ plot(target_test, pred_ensemble_stack, main = "Ensemble Stacked Fit",
      xlab = "Actual Revenue", ylab = "Predicted Revenue", col = "brown", 
      pch = 16)
 abline(0, 1, col = "black", lty = 2)
+dev.off()
 
 # Highlight best model based on success criteria
 r2_enet <- results_enet$R2
@@ -885,8 +893,8 @@ decile_summary <- df %>%
     lift = cumulative_actual / random_gain
   )
 
-# Gain Curve
-ggplot(decile_summary, aes(x = percent_customers)) +
+# Gain Curve – XGBoost Model
+gain_curve_xgb <- ggplot(decile_summary, aes(x = percent_customers)) +
   geom_line(aes(y = cumulative_actual, color = "Model Gain"), size = 1.2) +
   geom_line(aes(y = random_gain, color = "Random Gain"), linetype = "dashed", size = 1) +
   labs(title = "Gain Curve – XGBoost Model",
@@ -895,14 +903,20 @@ ggplot(decile_summary, aes(x = percent_customers)) +
   scale_color_manual(values = c("Model Gain" = "blue", "Random Gain" = "gray")) +
   theme_minimal()
 
-# Lift Chart
-ggplot(decile_summary, aes(x = decile, y = lift)) +
+print(gain_curve_xgb)  # Displays in RStudio
+ggsave("outputs/figures/gain_curve_xgb.png", plot = gain_curve_xgb, width = 8, height = 6)
+
+# Lift Curve – XGBoost Model
+lift_curve_xgb <- ggplot(decile_summary, aes(x = decile, y = lift)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
   labs(title = "Lift Chart – XGBoost Model",
        x = "Decile",
        y = "Lift (Model Gain / Random Gain)") +
   theme_minimal()
+
+print(lift_curve_xgb)  # Displays in RStudio
+ggsave("outputs/figures/lift_chart_xgb.png", plot = lift_chart_xgb, width = 8, height = 6)
 
 # ====================================================================== #
 # CRISP-DM Step 5: Evaluation – Lift & Gain Curve Comparison
@@ -966,15 +980,18 @@ write_csv(gain_all, "outputs/reports/gain_lift_summary.csv")
 saveRDS(gain_all, "outputs/reports/gain_lift_summary.rds")
 
 # Gain Curve
-ggplot(gain_all, aes(x = percent_customers, y = gain, color = model)) +
+gain_curve_all <- ggplot(gain_all, aes(x = percent_customers, y = gain, color = model)) +
   geom_line(size = 1.2) +
   labs(title = "Gain Curve Comparison",
        x = "Percent of Customers Targeted",
        y = "Cumulative Revenue Gain") +
   theme_minimal()
 
+print(gain_curve_all)  # Show in RStudio
+ggsave("outputs/figures/gain_curve_comparison.png", plot = gain_curve_all, width = 10, height = 6)
+
 # Lift Chart
-ggplot(gain_all, aes(x = decile, y = lift, color = model)) +
+lift_chart_all <- ggplot(gain_all, aes(x = decile, y = lift, color = model)) +
   geom_line(size = 1.2) +
   geom_point(size = 2) +
   geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
@@ -982,6 +999,9 @@ ggplot(gain_all, aes(x = decile, y = lift, color = model)) +
        x = "Decile",
        y = "Lift (Model Gain / Random Gain)") +
   theme_minimal()
+
+print(lift_chart_all)  # Show in RStudio
+ggsave("outputs/figures/lift_chart_comparison.png", plot = lift_chart_all, width = 10, height = 6)
 
 # ====================================================================== #
 # CRISP-DM Step 6: Deployment
