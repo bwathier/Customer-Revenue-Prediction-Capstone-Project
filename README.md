@@ -86,6 +86,18 @@ Customer-Revenue-Prediction-Capstone-Project/
 └── .gitignore
 ```
 
+## 📄 License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** license.
+
+You are free to:
+- Share and adapt the materials for non-commercial purposes
+- Credit the author and link to the license
+- Distribute any derivative work under the same license
+
+For full license details, visit [Creative Commons License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+
 ## 👤 Author
 
 **Bill R. Wathier**  
